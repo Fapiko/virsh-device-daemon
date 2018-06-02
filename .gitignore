@@ -1,4 +1,2 @@
 device-files/
-virsh-device-daemon
-virsh-device-daemon-win64.exe
-vendor/*/
+target/

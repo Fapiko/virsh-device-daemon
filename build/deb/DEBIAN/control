@@ -1,0 +1,6 @@
+Package: virsh-device-daemon
+Version: 0.1.0
+Maintainer: Lucas Jandrew <fapiko@gmail.com>
+Architecture: amd64
+Depends:
+Description: This is a service which manages attaching and detaching devices to virtual machines using VIRSH.

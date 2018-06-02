@@ -1,0 +1,79 @@
+#!/bin/sh
+# postinst script for virsh-device-daemon
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <postinst> `abort-remove'
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see http://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+service=virsh-device-daemon
+user=vdd
+group=vdd
+userdesc="Virsh Device Daemon"
+
+# create group
+if ! getent group ${group} >/dev/null; then
+        addgroup --system ${group}
+fi
+
+# create user
+if ! getent passwd ${user} >/dev/null; then
+        adduser --system --ingroup ${group} --home /var/lib/${user} \
+                --no-create-home --gecos "${userdesc}" \
+                --disabled-login ${user}
+fi
+
+# attach to libvirtd group
+if ! getent group libvirtd | grep ${user}; then
+    usermod -a -G libvirtd ${user}
+fi
+
+mkdir -p /var/log/${service}
+mkdir -p /etc/${service}
+chmod 2750 /etc/${service}
+chown -R ${user}:adm /var/log/${service}
+chown -R ${user}:${group} /etc/${service}
+
+# Update profile to enable autocompletion
+. /etc/profile
+
+case "$1" in
+    configure)
+        if test -z "$2"; then
+            # This is a fresh install of the package.
+
+            # On a fresh install, we want to limit permissions on the
+            # log directory to the owner and the group. Others won't
+            # have any access to log files: this is in case sensitive
+            # data are accidentally logged (like process crash data).
+            chmod 2750 /var/log/${service}
+        else
+            # The package was already configured: it's an upgrade over
+            # a previously installed version, or it's an install over
+            # a non-purged version (i.e. deinstalled but configuration
+            # files and data are still there).
+            true
+        fi
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0

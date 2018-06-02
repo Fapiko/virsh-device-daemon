@@ -14,11 +14,17 @@ import (
 type deviceFilesFlag []string
 
 var attachArg bool
+var configFile string
 var detachArg bool
 var deviceFiles deviceFilesFlag
 var hostname string
 var serverMode bool
 var vmName string
+
+const (
+	configFileDescription = "Path to config file"
+	serverModeDescription = "Run as a server"
+)
 
 func (deviceFiles *deviceFilesFlag) String() string {
 	return fmt.Sprint(*deviceFiles)
@@ -32,8 +38,10 @@ func (deviceFiles *deviceFilesFlag) Set(deviceFile string) error {
 func init() {
 	log.SetLevel(log.DebugLevel)
 
-	flag.BoolVar(&serverMode, "s", false, "Run as a server")
-	flag.BoolVar(&serverMode, "server", false, "Run as a server")
+	flag.BoolVar(&serverMode, "s", false, serverModeDescription)
+	flag.BoolVar(&serverMode, "server", false, serverModeDescription)
+	flag.StringVar(&configFile, "c", "", configFileDescription)
+	flag.StringVar(&configFile, "config", "", configFileDescription)
 	flag.Var(&deviceFiles, "f", "Path to device file")
 	flag.Var(&deviceFiles, "device-file", "Path to device file")
 	flag.StringVar(&vmName, "n", "", "Name of the VM to manage")
@@ -54,6 +62,17 @@ func main() {
 	// 2) As client that sends command based on CLI args
 
 	if serverMode {
+		// If config file is not empty, use that instead of CLI arguments
+		if configFile != "" {
+			config, err := parseConfig(configFile)
+			if err != nil {
+				log.Panic(err)
+			}
+
+			vmName = config.Name
+			deviceFiles = config.DeviceFiles
+		}
+
 		if vmName == "" {
 			log.Error("VM name must be provided when starting in server mode")
 			os.Exit(1)

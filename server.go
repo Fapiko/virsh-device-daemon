@@ -32,6 +32,7 @@ func detach(request *restful.Request, response *restful.Response) {
 		if err != nil {
 			log.Error(err)
 			response.WriteErrorString(500, err.Error())
+			return
 		}
 	}
 }
@@ -46,6 +47,7 @@ func attach(request *restful.Request, response *restful.Response) {
 		if err != nil {
 			log.Error(err)
 			response.WriteErrorString(500, err.Error())
+			return
 		}
 	}
 }
